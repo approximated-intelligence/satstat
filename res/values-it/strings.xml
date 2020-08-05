@@ -8,7 +8,7 @@
     <string name="action_agps">Ricarico dati AGPS</string>
     <string name="action_legend">Legenda</string>
     <string name="action_about">A proposito</string>
-    <string name="error_write_file">Errore scrivendo file</string>
+    <string name="error_write_file">Errore scrivendo il file</string>
     <string name="error_ext_storage">Memoria esterna non disponibile</string>
     <string name="info_start_rec">Registrazione iniziata</string>
     <string name="notify_record_title">Registrazione dati</string>
@@ -21,13 +21,13 @@
     <string name="title_section3">Radio</string>
     <string name="title_gps_lat">Latitudine</string>
     <string name="title_gps_lon">Longitudine</string>
-    <string name="title_gps_coord">Coordinati</string>
-    <string name="title_gps_decl">Decl.</string>
+    <string name="title_gps_coord">Coordinate</string>
+    <string name="title_gps_decl">Declinazione</string>
     <string name="title_gps_speed">Velocità</string>
     <string name="title_gps_alt">Altitudine</string>
     <string name="title_gps_time">Ultima posizione ricevuta</string>
     <string name="title_gps_bear">Rotta</string>
-    <string name="title_gps_orient">Orientation</string>
+    <string name="title_gps_orient">Orientamento</string>
     <string name="title_gps_acc">Errore</string>
     <string name="title_gps_sats">Satelliti</string>
     <string name="title_gps_ttff">TTFF (s)</string>
@@ -60,8 +60,8 @@
     <string name="title_sensors_rotZ">ωz (rad/s)</string>
     <string name="title_sensor_or">Orientamento</string>
     <string name="title_sensors_orAzimuth">Azimuth</string>
-    <string name="title_sensors_orAziText">Orientation</string>
-    <string name="title_sensors_orPitch">Becch.</string>
+    <string name="title_sensors_orAziText">Orientamento</string>
+    <string name="title_sensors_orPitch">Beccheggio</string>
     <string name="title_sensors_orRoll">Rollio</string>
     <string name="title_sensor_mag">Campo magnetico</string>
     <string name="title_sensors_magTotal">ΣB (µT)</string>
@@ -72,7 +72,7 @@
     <string name="title_sensors_metTemp">&#x00a0;°C</string>
     <string name="title_sensors_metPressure">&#x00a0;hPa</string>
     <string name="title_sensors_metHumid">Umidità relativa (%)</string>
-    <string name="title_sensor_misc">Diversi</string>
+    <string name="title_sensor_misc">Altri</string>
     <string name="title_sensors_light">&#x00a0;lux</string>
     <string name="title_sensors_proximity">Prossimità (cm)</string>
     <string name="title_radio_gsm">GSM</string>
@@ -99,28 +99,28 @@
         &lt;br/&gt;
         &lt;a href="https://gitlab.com/mvglasow/satstat/issues&gt;https://gitlab.com/mvglasow/satstat/issues&lt;/a&gt;
         &lt;/p&gt;&lt;p&gt;
-        Copyright &#169; 2013 – 2023 Michael von Glasow and contributors
+        Copyright &#169; 2013 – 2023 Michael von Glasow e collaboratori
         &lt;br/&gt;
-        Portions &#169; Jonathan Stott, k9mail, mapsforge.org, Polidea
+        Parti &#169; Jonathan Stott, k9mail, mapsforge.org, Polidea
         &lt;/p&gt;&lt;p&gt;
-        This program is free software: you can redistribute it and/or modify
-        it under the terms of the GNU General Public License as published by
-        the Free Software Foundation, either version 3 of the License, or
-        (at your option) any later version.
+        Questo programma è software libero: puoi ridistribuirlo e/o modificarlo
+        rispettando i termini della GNU General Public License pubblicata dalla
+        Free Software Foundation, version 3 della Licenza o
+        (a tua discrezione) qualsiasi versione più recente.
         &lt;/p&gt;&lt;p&gt;
-        This program is distributed in the hope that it will be useful,
-        but WITHOUT ANY WARRANTY; without even the implied warranty of
-        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-        GNU General Public License for more details.
+        Questo programma è distribuito nella speranza che sia utile,
+        ma SENZA ALCUNA GARANZIA; anche senza garanzia di
+        COMMERCIABILITA' o ADATTABILITA' PER UNO SCOPO PARTICOLARE. Riferirsi alla
+        GNU General Public License per ulteriori dettagli.
         &lt;/p&gt;&lt;p&gt;
-        You should have received a copy of the GNU General Public License
-        along with this program. If not, see 
-        &lt;a href="http://www.gnu.org/licenses/"&gt;http://www.gnu.org/licenses/&lt;/a&gt;.
+        Dovresti aver ricevuto una copia della GNU General Public License
+        insieme al programma. In alternativa, consulta 
+        &lt;a href="https://www.gnu.org/licenses/"&gt;https://www.gnu.org/licenses/&lt;/a&gt;.
         &lt;/p&gt;&lt;p&gt;
-        Map data and information provided by MapQuest, 
+        Mappe e informazioni fornite da MapQuest, 
         &lt;a href="http://www.openstreetmap.org/copyright"&gt;OpenStreetMap&lt;/a&gt; 
-        and contributors, 
-        &lt;a href="http://wiki.openstreetmap.org/wiki/Legal_FAQ#3a._I_would_like_to_use_OpenStreetMap_maps._How_should_I_credit_you.3F"&gt;ODbL&lt;/a&gt;.
+        and collaboratori, 
+        &lt;a href="https://wiki.openstreetmap.org/wiki/Legal_FAQ#3a._I_would_like_to_use_OpenStreetMap_maps._How_should_I_credit_you.3F"&gt;ODbL&lt;/a&gt;.
         &lt;/p&gt;&lt;p&gt;
         Il codice sorgente di quest\'applicazione si trova a:
         &lt;br/&gt;
@@ -155,16 +155,16 @@
 
     <string name="pref_lastupdate">Ultimo aggiornamento</string>
     <string name="pref_networks">Reti</string>
-    <string name="pref_networks_summary">Aggiorna dati AGPS quando il mio dispositivo si collega a una delle reti selezionati</string>
+    <string name="pref_networks_summary">Aggiorna dati AGPS quando il mio dispositivo si collega a una delle reti selezionate</string>
     <string name="pref_map">Mappa</string>
     <string name="pref_loc_prov">Fonti di localizzazione</string>
-    <string name="pref_loc_prov_summary">Mostrare le fonti di localizzazione selezionati sulla mappa</string>
+    <string name="pref_loc_prov_summary">Mostrare le fonti di localizzazione selezionate sulla mappa</string>
     <string name="pref_data">Rappresentazione dati</string>
     <string name="pref_unit">Usare unità metriche</string>
-    <string name="pref_unit_summary">Se non selezionato, verranno utilizzate delle unità imperiali (eccetto per i sensori)</string>
-    <string name="pref_knots">Mostrare velocità en nodi</string>
-    <string name="pref_knots_summary">Se non selezionato, verranno delle unità metriche o imperiali (secondo l\'impostazione qui sopra) will be used</string>
-    <string name="pref_coord">Coordinati</string>
+    <string name="pref_unit_summary">Se non selezionato, verranno utilizzate le unità imperiali (eccetto per i sensori)</string>
+    <string name="pref_knots">Mostrare velocità in nodi</string>
+    <string name="pref_knots_summary">Se non selezionato, verranno utilizzate le unità metriche o imperiali (secondo l\'impostazione qui sopra)</string>
+    <string name="pref_coord">Coordinate</string>
 
     <string-array name="prefs_coord_keys">
         <item>Gradi decimali</item>
@@ -228,11 +228,11 @@
     <string name="action_yes">Sì</string>
     <string name="action_no">No</string>
     <string name="status_downloads_completed">Tutti i download hanno finito</string>
-    <string name="status_perm_map_download">Per scaricare delle mappe offline, bisogna consentire l\'accesso alle file sul dispositivo</string>
-    <string name="status_perm_location">Per vedere posizione o reti, bisogna consentire l\'accesso alla posizione di questo dispositivo</string>
-    <string name="status_perm_refresh_agps">Per ricaricare dati AGPS, bisogna consentire l\'accesso alla posizione di questo dispositivo</string>
+    <string name="status_perm_map_download">Per scaricare delle mappe offline, bisogna consentire l\'accesso ai file sul dispositivo</string>
+    <string name="status_perm_location">Per vedere posizione o reti, bisogna consentire l\'accesso alla posizione sul dispositivo</string>
+    <string name="status_perm_refresh_agps">Per ricaricare dati AGPS, bisogna consentire l\'accesso alla posizione sul dispositivo</string>
     <string name="status_perm_offline_map">Per utilizzare delle mappe offline, bisogna consentire l\'accesso alle file sul dispositivo</string>
-    <string name="notify_perm_title">SatStat sta richiedendo permessi</string>
+    <string name="notify_perm_title">SatStat sta richiedendo i permessi</string>
     <string name="notify_perm_body">Tocca per consentire o negare</string>
     <string name="pref_cid2">Mostrare cell ID in entrambi formati</string>
     <string name="pref_cid2_summary">Mostrare sia la forma suddivisa che quella combinata (quella selezionata sopra verrà mostrata sopra l\'altra)</string>
