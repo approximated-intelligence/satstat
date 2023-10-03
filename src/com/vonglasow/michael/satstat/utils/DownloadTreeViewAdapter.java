@@ -21,6 +21,7 @@
 package com.vonglasow.michael.satstat.utils;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -332,8 +333,22 @@ public class DownloadTreeViewAdapter extends AbstractTreeViewAdapter<RemoteFile>
         			});
         			
         			builder.show();
-        		} else
+        		} else {
+        			/*
+        			 * This is a hack to work around a bug in some Android 10+ builds where all
+        			 * downloaded files get deleted after some time. By creating a file at the target
+        			 * path with the same name, we ensure the download manager downloads to a different
+        			 * file name, same as when replacing an existing map file. As deleting the existing
+        			 * file and renaming the downloaded one happens outside of `DownloadManager`, those
+        			 * files will not be affected by the bug.
+        			 */
+        			try {
+        				mapFile.createNewFile();
+        			} catch (IOException e) {
+        				// NOP
+        			}
         			startDownload(rfile, mapFile, view);
+        		}
         	}
         }
     }
