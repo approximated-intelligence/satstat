@@ -1,0 +1,5 @@
+Translations: add Polish
+
+Bug fixes:
+
+Map download: work around bug in Android 10+ causing downloaded map files to get deleted after some time

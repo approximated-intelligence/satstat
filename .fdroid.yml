@@ -12,8 +12,8 @@ RepoType: git
 Repo: https://gitlab.com/mvglasow/satstat.git
 
 Builds:
-  - versionName: 3.5.1
-    versionCode: 30501
+  - versionName: 3.6.0
+    versionCode: 30600
     commit: HEAD
     init: ./setbuild.sh
     gradle:
@@ -21,5 +21,5 @@ Builds:
 
 AutoUpdateMode: Version satstat-%v
 UpdateCheckMode: Tags
-CurrentVersion: 3.5.1
-CurrentVersionCode: 30501
+CurrentVersion: 3.6.0
+CurrentVersionCode: 30600
