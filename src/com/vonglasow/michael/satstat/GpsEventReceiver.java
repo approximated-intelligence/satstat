@@ -22,13 +22,13 @@ package com.vonglasow.michael.satstat;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import com.vonglasow.michael.satstat.utils.PermissionHelper;
 import com.vonglasow.michael.satstat.utils.WifiCapabilities;
 
 import android.Manifest;
-import android.app.ActivityManager;
-import android.app.ActivityManager.RunningServiceInfo;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -40,9 +40,11 @@ import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
-import android.os.AsyncTask;
+import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.preference.PreferenceManager;
-import android.support.v4.content.ContextCompat;
+import androidx.core.content.ContextCompat;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -82,19 +84,12 @@ public class GpsEventReceiver extends BroadcastReceiver {
 			boolean notifyFix = sharedPref.getBoolean(Const.KEY_PREF_NOTIFY_FIX, false);
 			boolean notifySearch = sharedPref.getBoolean(Const.KEY_PREF_NOTIFY_SEARCH, false);
 			if (notifyFix || notifySearch) {
-				boolean isRunning = false;
-				ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
-				for (RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-					if (PasvLocListenerService.class.getName().equals(service.service.getClassName())) {
-						isRunning = true;
-					}
-				}
-				if (!isRunning) {
-					Intent startServiceIntent = new Intent(context, PasvLocListenerService.class);
-					startServiceIntent.setAction(intent.getAction());
-					startServiceIntent.putExtras(intent.getExtras());
-					context.startService(startServiceIntent);
-				}
+				// Always start the service. getRunningServices() is deprecated and unreliable
+				// on newer Android versions. The service will manage its own lifecycle.
+				Intent startServiceIntent = new Intent(context, PasvLocListenerService.class);
+				startServiceIntent.setAction(intent.getAction());
+				startServiceIntent.putExtras(intent.getExtras());
+				ContextCompat.startForegroundService(context, startServiceIntent);
 			}
 		} else if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION) 
 				&& updateNetworks.contains(Const.KEY_PREF_UPDATE_NETWORKS_WIFI)) {
@@ -109,12 +104,21 @@ public class GpsEventReceiver extends BroadcastReceiver {
 		} else if ((intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION )) ||
 				(intent.getAction().equals(Const.AGPS_DATA_EXPIRED))) {
 			// change in network connectivity or AGPS expiration timer fired
+			// Note: CONNECTIVITY_ACTION is not delivered to apps targeting API 29+
+			// but AGPS_DATA_EXPIRED still works (alarm-based trigger)
 			boolean isAgpsExpired = false;
 			if (intent.getAction().equals(Const.AGPS_DATA_EXPIRED)) {
 				Log.i(this.getClass().getSimpleName(), "AGPS data expired, checking available networks");
 				isAgpsExpired = true;
 			}
-			NetworkInfo netinfo = ((ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
+			ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+			NetworkInfo netinfo = null;
+			try {
+				netinfo = cm.getActiveNetworkInfo();
+			} catch (SecurityException e) {
+				Log.w(this.getClass().getSimpleName(), "Cannot get active network info: " + e.getMessage());
+				return;
+			}
 			if (netinfo == null) return;
 			if (!netinfo.isConnected()) return;
 			String type;
@@ -152,6 +156,8 @@ public class GpsEventReceiver extends BroadcastReceiver {
 	 * @param wantFeedback Whether to display a toast informing the user about
 	 * the success of the operation.
 	 */
+	private static final ExecutorService sExecutor = Executors.newSingleThreadExecutor();
+
 	public static void refreshAgps(Context context, boolean enforceInterval, boolean wantFeedback) {
 		SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
 		long last = sharedPref.getLong(Const.KEY_PREF_UPDATE_LAST, 0);
@@ -161,7 +167,7 @@ public class GpsEventReceiver extends BroadcastReceiver {
 		//Log.d(GpsEventReceiver.class.getSimpleName(), String.format("refreshAgps, enforceInterval: %b, wantFeedback: %b", enforceInterval, wantFeedback));
 		
 		if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
-			new AgpsUpdateTask(wantFeedback).execute(context, mAgpsIntent, sharedPref, freqDays * Const.MILLIS_PER_DAY);
+			executeAgpsUpdate(context, mAgpsIntent, sharedPref, freqDays * Const.MILLIS_PER_DAY, wantFeedback);
 		else {
 			Log.i(TAG, "Requesting permissions to update AGPS data");
 			PermissionHelper.requestPermissions((SatStatApplication) (context.getApplicationContext()),
@@ -173,90 +179,78 @@ public class GpsEventReceiver extends BroadcastReceiver {
 		}
 	}
 	
-	private static class AgpsUpdateTask extends AsyncTask<Object, Void, Integer> {
-		Context mContext;
-		boolean mWantFeedback = false;
-		
-		public AgpsUpdateTask(boolean wantFeedback) {
-			super();
-			mWantFeedback = wantFeedback;
-		}
-
-		/**
-		 * @param args[0] A {@link Context} for connecting to the various system services
-		 * @param args[1] The {@link Intent} to raise when the next update is due
-		 * @param args[2] A {@link SharedPreferences} instance in which the timestamp of the update will be stored
-		 * @param args[3] The update frequency, of type {@link Long}, in milliseconds
-		 */
-		@Override
-		protected Integer doInBackground(Object... args) {
-			mContext = (Context) args[0];
-			Intent agpsIntent = (Intent) args[1];
-			SharedPreferences sharedPref = (SharedPreferences) args[2];
-			long freqMillis = (Long) args[3];
+	private static void executeAgpsUpdate(final Context context, final Intent agpsIntent,
+			final SharedPreferences sharedPref, final long freqMillis, final boolean wantFeedback) {
+		sExecutor.execute(() -> {
+			final Handler mainHandler = new Handler(Looper.getMainLooper());
+			int result = doAgpsUpdate(context, agpsIntent, sharedPref, freqMillis);
 			
-			int nc = WifiCapabilities.getNetworkConnectivity();
-			if (nc == WifiCapabilities.NETWORK_CAPTIVE_PORTAL) {
-				// portale cattivo che non ci permette di scaricare i dati AGPS
-				Log.i(GpsEventReceiver.class.getSimpleName(), "Captive portal detected, cannot update AGPS data");
-				return nc;
-			} else if (nc == WifiCapabilities.NETWORK_ERROR) {
-				Log.i(GpsEventReceiver.class.getSimpleName(), "No network available, cannot update AGPS data");
-				return nc;
+			if (wantFeedback) {
+				final String message = getAgpsMessage(context, result);
+				if (!message.isEmpty()) {
+					mainHandler.post(() -> Toast.makeText(context, message, Toast.LENGTH_SHORT).show());
+				}
 			}
-			
-			AlarmManager alm = (AlarmManager) mContext.getSystemService(Context.ALARM_SERVICE);
-			PendingIntent pi = PendingIntent.getBroadcast(mContext, 0, agpsIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-			alm.cancel(pi);
-
-			LocationManager locman = (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
-			List<String> allProviders = locman.getAllProviders();
-			PendingIntent tempIntent = PendingIntent.getBroadcast(mContext, 0, mLocationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-			Log.i(GpsEventReceiver.class.getSimpleName(), "Requesting AGPS data update");
-			try {
-				if (allProviders.contains(LocationManager.GPS_PROVIDER))
-					locman.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, tempIntent);
-				locman.sendExtraCommand("gps", "force_xtra_injection", null);
-				locman.sendExtraCommand("gps", "force_time_injection", null);
-				locman.removeUpdates(tempIntent);
-				
-				SharedPreferences.Editor spEditor = sharedPref.edit();
-				spEditor.putLong(Const.KEY_PREF_UPDATE_LAST, System.currentTimeMillis());
-				spEditor.commit();
-			} catch (SecurityException e) {
-				Log.w(GpsEventReceiver.class.getSimpleName(), "Permissions not granted, cannot update AGPS data");
-			}
-			
-			if (freqMillis > 0) {
-				// if an update interval is set, prepare an alarm to trigger a new
-				// update when it elapses (if no interval is set, do nothing as we
-				// cannot determine a point in time for re-running the update)
-				long next = System.currentTimeMillis() + freqMillis;
-				alm.set(AlarmManager.RTC, next, pi);
-				Log.i(GpsEventReceiver.class.getSimpleName(), String.format("Next update due %1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS (after %2$d ms)", next, freqMillis));
-			}
-
+		});
+	}
+	
+	private static int doAgpsUpdate(Context context, Intent agpsIntent,
+			SharedPreferences sharedPref, long freqMillis) {
+		int nc = WifiCapabilities.getNetworkConnectivity();
+		if (nc == WifiCapabilities.NETWORK_CAPTIVE_PORTAL) {
+			Log.i(GpsEventReceiver.class.getSimpleName(), "Captive portal detected, cannot update AGPS data");
+			return nc;
+		} else if (nc == WifiCapabilities.NETWORK_ERROR) {
+			Log.i(GpsEventReceiver.class.getSimpleName(), "No network available, cannot update AGPS data");
 			return nc;
 		}
 		
-		@Override
-		protected void onPostExecute(Integer result) {
-			if ((mContext == null) || !mWantFeedback) return;
-			String message = "";
-			switch (result) {
-			case WifiCapabilities.NETWORK_AVAILABLE:
-				message = mContext.getString(R.string.status_agps);
-				break;
-			case WifiCapabilities.NETWORK_CAPTIVE_PORTAL:
-				message = mContext.getString(R.string.status_agps_captive);
-				break;
-			case WifiCapabilities.NETWORK_ERROR:
-				message = mContext.getString(R.string.status_agps_error);
-				break;
+		AlarmManager alm = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+		PendingIntent pi = PendingIntent.getBroadcast(context, 0, agpsIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+		alm.cancel(pi);
+
+		LocationManager locman = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+		List<String> allProviders = locman.getAllProviders();
+		PendingIntent tempIntent = PendingIntent.getBroadcast(context, 0, mLocationIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+		Log.i(GpsEventReceiver.class.getSimpleName(), "Requesting AGPS data update");
+		try {
+			if (allProviders.contains(LocationManager.GPS_PROVIDER))
+				locman.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, tempIntent);
+			locman.sendExtraCommand("gps", "force_xtra_injection", null);
+			locman.sendExtraCommand("gps", "force_time_injection", null);
+			locman.removeUpdates(tempIntent);
+			
+			SharedPreferences.Editor spEditor = sharedPref.edit();
+			spEditor.putLong(Const.KEY_PREF_UPDATE_LAST, System.currentTimeMillis());
+			spEditor.commit();
+		} catch (SecurityException e) {
+			Log.w(GpsEventReceiver.class.getSimpleName(), "Permissions not granted, cannot update AGPS data");
+		}
+		
+		if (freqMillis > 0) {
+			long next = System.currentTimeMillis() + freqMillis;
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+				alm.setExactAndAllowWhileIdle(AlarmManager.RTC, next, pi);
+			} else {
+				alm.set(AlarmManager.RTC, next, pi);
 			}
-			Toast.makeText(mContext, message, Toast.LENGTH_SHORT).show();
+			Log.i(GpsEventReceiver.class.getSimpleName(), String.format("Next update due %1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS (after %2$d ms)", next, freqMillis));
 		}
 
+		return nc;
+	}
+	
+	private static String getAgpsMessage(Context context, int result) {
+		switch (result) {
+		case WifiCapabilities.NETWORK_AVAILABLE:
+			return context.getString(R.string.status_agps);
+		case WifiCapabilities.NETWORK_CAPTIVE_PORTAL:
+			return context.getString(R.string.status_agps_captive);
+		case WifiCapabilities.NETWORK_ERROR:
+			return context.getString(R.string.status_agps_error);
+		default:
+			return "";
+		}
 	}
 
 

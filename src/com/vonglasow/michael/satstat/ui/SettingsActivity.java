@@ -39,10 +39,10 @@ import android.preference.Preference;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -143,10 +143,7 @@ public class SettingsActivity extends AppCompatActivity implements OnPreferenceC
 			startActivityForResult(intent, REQUEST_CODE_PICK_MAP_PATH);
 			return true;
 		} else if (preference == prefMapDownload) {
-			if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
-				startActivity(new Intent(this, MapDownloadActivity.class));
-			else
-				ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, Const.PERM_REQUEST_MAP_DOWNLOAD);
+			startActivity(new Intent(this, MapDownloadActivity.class));
 			return true;
 		} else if (preference == prefMapPurge) {
 			TileCache mapRendererTileCache = AndroidUtil.createExternalStorageTileCache(this,

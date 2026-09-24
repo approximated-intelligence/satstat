@@ -166,7 +166,7 @@ public class Const {
 	public static final String CONTENT_TYPE_HTML = "text/html";
 
 
-	public static final String MAP_PATH_DEFAULT = new File(Environment.getExternalStorageDirectory(), "org.mapsforge/maps").getAbsolutePath();
+	public static final String MAP_PATH_DEFAULT = "org.mapsforge/maps";
 
 
 	/**

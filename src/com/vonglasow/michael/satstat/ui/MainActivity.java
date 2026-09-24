@@ -66,16 +66,16 @@ import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.design.widget.TabLayout;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.view.ViewPager;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.view.ContextThemeWrapper;
+import com.google.android.material.tabs.TabLayout;
+import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentStatePagerAdapter;
+import androidx.core.content.ContextCompat;
+import androidx.viewpager.widget.ViewPager;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.view.ContextThemeWrapper;
 import android.telephony.CellInfo;
 import android.telephony.CellLocation;
 import android.telephony.PhoneStateListener;
@@ -105,12 +105,12 @@ public class MainActivity extends AppCompatActivity implements GpsStatus.Listene
 	private static final String TAG = MainActivity.class.getSimpleName();
 
     /**
-     * The {@link android.support.v4.view.PagerAdapter} that will provide
+     * The {@link androidx.viewpager.widget.ViewPager} that will provide
      * fragments for each of the sections. We use a
-     * {@link android.support.v4.app.FragmentPagerAdapter} derivative, which
+     * {@link androidx.viewpager.adapter.FragmentPagerAdapter} derivative, which
      * will keep every loaded fragment in memory. If this becomes too memory
      * intensive, it may be best to switch to a
-     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
+     * {@link androidx.fragment.app.FragmentStatePagerAdapter}.
      */
     SectionsPagerAdapter mSectionsPagerAdapter;
 
@@ -557,17 +557,11 @@ public class MainActivity extends AppCompatActivity implements GpsStatus.Listene
     				messageBuilder.append(getString(R.string.status_perm_location));
     				Log.w(TAG, "ACCESS_FINE_LOCATION permission not granted. Location and cell info will not be available.");
     			} // if grantResults[i]
-    		} else if (permissions[i].equals(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
     			if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
-    				if (permsRequested[Const.PERM_REQUEST_OFFLINE_MAP] && (mapSectionFragment != null)) {
-    					mapSectionFragment.onMapSourceChanged();
-    					permsRequested[Const.PERM_REQUEST_OFFLINE_MAP] = false;
-    				}
     			} else {
     				if (messageBuilder.length() > 0)
     					messageBuilder.append("\n");
     				messageBuilder.append(getString(R.string.status_perm_offline_map));
-    				Log.w(TAG, "WRITE_EXTERNAL_STORAGE permission not granted. Offline map will not be available.");
     			}
     		} // if permissions[i].equals()
     	// for i
@@ -702,8 +696,6 @@ public class MainActivity extends AppCompatActivity implements GpsStatus.Listene
 			prefMapOffline = sharedPreferences.getBoolean(Const.KEY_PREF_MAP_OFFLINE, prefMapOffline);
 			if (mapSectionFragment != null)
 				mapSectionFragment.onMapSourceChanged();
-			if (prefMapOffline && (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED))
-				ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, Const.PERM_REQUEST_OFFLINE_MAP);
 		} else if (key.equals(Const.KEY_PREF_MAP_PATH)) {
 			prefMapPath = sharedPreferences.getString(Const.KEY_PREF_MAP_PATH, prefMapPath);
 			if (mapSectionFragment != null)
@@ -752,10 +744,9 @@ public class MainActivity extends AppCompatActivity implements GpsStatus.Listene
 		 * Refresh map layers when offline map is selected and we have storage permission
 		 * (it might have been granted while we were gone, in which case we wouldn't have the layer)
 		 */
-		if (prefMapOffline
-				&& (mapSectionFragment != null)
-				&& (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED))
+		if (prefMapOffline && (mapSectionFragment != null)) {
 			mapSectionFragment.onMapSourceChanged();
+		}
 
         requestPermissions();
     }
@@ -853,10 +844,6 @@ public class MainActivity extends AppCompatActivity implements GpsStatus.Listene
 				perms.add(Manifest.permission.ACCESS_FINE_LOCATION);
 		}
 
-		if (permsRequested[Const.PERM_REQUEST_OFFLINE_MAP]) {
-			if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
-				perms.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-		}
 
 		if (perms.size() > 0)
 			ActivityCompat.requestPermissions(this, perms.toArray(new String[]{}), Const.PERM_REQUEST_STARTUP);
@@ -866,10 +853,10 @@ public class MainActivity extends AppCompatActivity implements GpsStatus.Listene
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
      * one of the sections/tabs/pages.
      */
-    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+    public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
 
-        public SectionsPagerAdapter(FragmentManager fm) {
-            super(fm);
+        	public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm, FragmentStatePagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
         }
 
         @Override
