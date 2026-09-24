@@ -50,9 +50,16 @@ fdroid build:
     # each `fdroid build --on-server` run expects sudo, then uninstalls it
     - set -x
     - apt-get install sudo
-    # patch the ancient F-Droid server to accept unknown Gradle versions
-    # (its get_sha() case statement predates Gradle 8.x)
+    # the CI image (Debian 9, last updated Feb 2021) has only Java 8 —
+    # AGP 8.x needs Java 17. Install Temurin 17 and patch the ancient
+    # F-Droid server to accept Gradle 8.9 (not in its hardcoded hash list).
     - |
+      apt-get update -qq && apt-get install -y -qq wget > /dev/null 2>&1
+      wget -q https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.13%2B11/OpenJDK17U-jdk_x64_linux_hotspot_17.0.13_11.tar.gz -O /tmp/jdk17.tar.gz
+      mkdir -p /opt/jdk17 && tar xzf /tmp/jdk17.tar.gz -C /opt/jdk17 --strip-components=1
+      export JAVA_HOME=/opt/jdk17
+      export PATH=$JAVA_HOME/bin:$PATH
+      echo "JAVA_HOME=$JAVA_HOME  java=$(java -version 2>&1 | head -1)"
       sed -i '/^        \*) exit 1$/c\        *) echo "0000000000000000000000000000000000000000000000000000000000000000" ;;' /fdroidserver/gradlew-fdroid
       sed -i '/sha256sum -c/s|^|# CI: skip gradle checksum verification |' /fdroidserver/gradlew-fdroid
     # TODO not sure if we need that for this app
