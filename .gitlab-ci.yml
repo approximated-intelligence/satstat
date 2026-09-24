@@ -67,7 +67,7 @@ fdroid build:
     # fdroidserver's get_source_date_epoch() returns None when build/<package>
     # doesn't exist; creating it allows git log to succeed.
     - mkdir -p build/com.vonglasow.michael.satstat
-    - (cd build/com.vonglasow.michael.satstat && git init && git commit --allow-empty -m "fdroid build dir")
+    - (cd build/com.vonglasow.michael.satstat && git init && git config user.email "ci@localhost" && git config user.name "CI" && git commit --allow-empty -m "fdroid build dir")
     - export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
     - fdroid build --verbose --no-tarball
     # create a keystore if we don't have one
