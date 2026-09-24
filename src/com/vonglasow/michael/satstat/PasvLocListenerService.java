@@ -31,7 +31,6 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import androidx.core.app.ActivityCompat.OnRequestPermissionsResultCallback;
-import androidx.core.app.ServiceCompat;
 import androidx.core.app.TaskStackBuilder;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -328,8 +327,7 @@ public class PasvLocListenerService extends Service implements GpsStatus.Listene
 
 		// Start foreground immediately to meet the Android 14+ 3-second deadline.
 		// The notification will be updated in showStatusNoLocation()/onLocationChanged().
-		ServiceCompat.startForeground(this, ONGOING_NOTIFICATION, mBuilder.build(),
-				androidx.core.app.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
+		startForeground(ONGOING_NOTIFICATION, mBuilder.build());
 
 		// if we were started through a broadcast, mGpsStatusReceiver had
 		// no way of picking it up, so we need to forward it manually
