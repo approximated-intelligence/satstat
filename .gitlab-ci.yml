@@ -33,7 +33,6 @@ gradle build:
 fdroid build:
   stage: build
   image: eclipse-temurin:17-jdk
-  allow_failure: true
   artifacts:
     paths:
       - signed/
