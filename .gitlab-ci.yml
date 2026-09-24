@@ -1,5 +1,3 @@
-image: registry.gitlab.com/mvglasow/android-gitlab-ci:master
-
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
 
@@ -7,6 +5,30 @@ cache:
   paths:
     - .gradle/wrapper
     - .gradle/caches
+
+# Fast gradle build using Java 17 + Android SDK
+gradle build:
+  stage: build
+  image: eclipse-temurin:17-jdk
+  variables:
+    ANDROID_SDK_ROOT: /opt/android-sdk
+    ANDROID_HOME: /opt/android-sdk
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq wget unzip > /dev/null
+    - wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O /tmp/cmdline-tools.zip
+    - mkdir -p ${ANDROID_SDK_ROOT}/cmdline-tools
+    - unzip -q /tmp/cmdline-tools.zip -d ${ANDROID_SDK_ROOT}/cmdline-tools
+    - mv ${ANDROID_SDK_ROOT}/cmdline-tools/cmdline-tools ${ANDROID_SDK_ROOT}/cmdline-tools/latest
+    # accept all SDK licenses
+    - mkdir -p ${ANDROID_SDK_ROOT}/licenses
+    - printf 'y\ny\ny\ny\ny\ny\n' | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
+    - ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0" "build-tools;34.0.0" 2>/dev/null
+  script:
+    - ./gradlew assembleDebug --no-daemon
+  artifacts:
+    paths:
+      - build/outputs/apk/
+    when: always
 
 fdroid build:
   stage: build
