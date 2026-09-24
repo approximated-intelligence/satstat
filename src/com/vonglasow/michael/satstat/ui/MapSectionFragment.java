@@ -72,8 +72,8 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.core.content.ContextCompat;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -232,10 +232,9 @@ public class MapSectionFragment extends Fragment {
 		LayerManager layerManager = mapMap.getLayerManager();
 		Layers layers = layerManager.getLayers();
 
-		if (mainActivity.prefMapOffline && (ContextCompat.checkSelfPermission(mainActivity, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)) {
+		if (mainActivity.prefMapOffline) {
 			/*
-			 * If offline maps are enabled AND we have storage permission, use offline map tiles.
-			 * Skip this step if we don't have permission, else we would pollute the cache with blank tiles.
+			 * If offline maps are enabled, use offline map tiles.
 			 */
 			if (mapRendererTileCache == null)
 				mapRendererTileCache = AndroidUtil.createExternalStorageTileCache(this.getContext(),
