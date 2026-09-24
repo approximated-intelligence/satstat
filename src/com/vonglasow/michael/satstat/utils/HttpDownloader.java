@@ -207,7 +207,7 @@ public class HttpDownloader {
 				e.printStackTrace();
 			}
 			
-			parsedHtml = Html.fromHtml(out.toString());
+			parsedHtml = Html.fromHtml(out.toString(), Html.FROM_HTML_MODE_LEGACY);
 
 			// links get converted to URLSpan objects, examine them
 			URLSpan [] us = parsedHtml.getSpans(0, parsedHtml.length(), android.text.style.URLSpan.class);
