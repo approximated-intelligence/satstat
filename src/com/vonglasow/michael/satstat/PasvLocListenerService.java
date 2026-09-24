@@ -25,11 +25,13 @@ import com.vonglasow.michael.satstat.utils.PermissionHelper;
 import uk.me.jstott.jcoord.LatLng;
 import uk.me.jstott.jcoord.MGRSRef;
 import android.Manifest;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.support.v4.app.ActivityCompat.OnRequestPermissionsResultCallback;
-import android.support.v4.app.TaskStackBuilder;
+import androidx.core.app.ActivityCompat.OnRequestPermissionsResultCallback;
+import androidx.core.app.TaskStackBuilder;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -42,11 +44,12 @@ import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.content.ContextCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 import android.util.Log;
 import com.hzi.UTM;
 
@@ -99,6 +102,14 @@ public class PasvLocListenerService extends Service implements GpsStatus.Listene
 	@Override    
 	public void onCreate() {
 		super.onCreate(); //do we need that here?
+
+		// Create notification channel for API 26+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+			NotificationChannel channel = new NotificationChannel("satstat_notification",
+					getString(R.string.app_name), NotificationManager.IMPORTANCE_LOW);
+			channel.setDescription("Satellite status monitoring");
+			((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
+		}
 
 		mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 		mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -293,7 +304,7 @@ public class PasvLocListenerService extends Service implements GpsStatus.Listene
 			Log.w("PasvLocListenerService", "No passive location provider found. Data display will not be available.");
 		}
 
-        mBuilder = new NotificationCompat.Builder(this)
+        mBuilder = new NotificationCompat.Builder(this, "satstat_notification")
 		.setSmallIcon(R.drawable.ic_stat_notify_location)
 		.setContentTitle(getString(R.string.value_none))
 		.setContentText(getString(R.string.value_none))
@@ -309,7 +320,7 @@ public class PasvLocListenerService extends Service implements GpsStatus.Listene
 		PendingIntent mainPendingIntent =
 				stackBuilder.getPendingIntent(
 						0,
-						PendingIntent.FLAG_UPDATE_CURRENT
+						PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
 						);
 
 		mBuilder.setContentIntent(mainPendingIntent);
