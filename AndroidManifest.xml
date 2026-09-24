@@ -1,21 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.vonglasow.michael.satstat"
     android:versionCode="30601"
     android:versionName="3.6.1" >
 
     <uses-sdk
-        android:targetSdkVersion="23" />
+        android:targetSdkVersion="35" />
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_LOCATION_EXTRA_COMMANDS" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 
     <application
         android:name=".SatStatApplication"
@@ -25,6 +24,7 @@
         android:theme="@style/AppTheme" >
         <activity
             android:name=".ui.MainActivity"
+            android:exported="true"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -37,7 +37,7 @@
             android:label="@string/title_activity_about"
             android:parentActivityName=".ui.MainActivity" >
             <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
+                android:name="androidx.parent/PARENT_ACTIVITY"
                 android:value=".ui.MainActivity" />
         </activity>
         <activity
@@ -45,11 +45,11 @@
             android:label="@string/title_activity_settings"
             android:parentActivityName=".ui.MainActivity" >
             <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
+                android:name="androidx.parent/PARENT_ACTIVITY"
                 android:value=".ui.MainActivity" />
         </activity>
 
-        <receiver android:name="GpsEventReceiver" >
+        <receiver android:name="GpsEventReceiver" android:exported="true" >
             <intent-filter>
                 <action android:name="android.location.GPS_ENABLED_CHANGE" />
                 <action android:name="android.location.GPS_FIX_CHANGE" />
@@ -62,6 +62,7 @@
         <service
             android:name="PasvLocListenerService"
             android:exported="false"
+            android:foregroundServiceType="location"
             android:stopWithTask="false" >
         </service>
 
@@ -70,7 +71,7 @@
             android:label="@string/title_activity_legend"
             android:parentActivityName=".ui.MainActivity" >
             <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
+                android:name="androidx.parent/PARENT_ACTIVITY"
                 android:value=".ui.MainActivity" />
         </activity>
         <activity
@@ -78,7 +79,7 @@
             android:label="@string/title_activity_map_download"
             android:parentActivityName=".ui.SettingsActivity" >
             <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
+                android:name="androidx.parent/PARENT_ACTIVITY"
                 android:value=".ui.SettingsActivity" />
         </activity>
         <activity
@@ -87,6 +88,7 @@
         <!-- This is necessary for file browser -->
         <activity
             android:name="ua.com.vassiliev.androidfilebrowser.FileBrowserActivity"
+            android:exported="true"
             android:label="File browser"
             android:configChanges="orientation|keyboardHidden">
             <intent-filter>
