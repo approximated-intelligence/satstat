@@ -1,12 +1,11 @@
 buildscript {
     repositories {
         mavenCentral()
-        jcenter()
         google()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.0.0'
+        classpath 'com.android.tools.build:gradle:8.7.0'
     }
 }
 
@@ -14,17 +13,16 @@ apply plugin: 'com.android.application'
 
 repositories {
     mavenCentral()
-    jcenter()
     google()
 }
 
 android {
-    compileSdkVersion 23
-    // buildToolsVersion '25.0.0' // now chosen automatically
+    namespace 'com.vonglasow.michael.satstat'
+    compileSdkVersion 35
 
     defaultConfig {
-        minSdkVersion 11
-        targetSdkVersion 23
+        minSdkVersion 24
+        targetSdkVersion 35
     }
 
     packagingOptions {
@@ -44,28 +42,23 @@ android {
         }
     }
     
-    lintOptions {
+    lint {
         abortOnError false
     }
+}
 
-    repositories {
-        mavenCentral()
-        mavenLocal()
-    }
+dependencies {
+    implementation 'androidx.core:core:1.15.0'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.android.material:material:1.12.0'
+    
+    implementation 'commons-net:commons-net:3.9.0'
 
-    dependencies {
-        implementation 'com.android.support:support-v4:23.2.+'
-        implementation 'com.android.support:appcompat-v7:23.2.+'
-        implementation 'com.android.support:design:23.2.+'
-        
-        implementation 'commons-net:commons-net:3.5'
-
-        implementation 'org.mapsforge:mapsforge-core:0.18.0'
-        implementation 'org.mapsforge:mapsforge-map:0.18.0'
-        implementation 'org.mapsforge:mapsforge-map-reader:0.18.0'
-        implementation 'org.mapsforge:mapsforge-themes:0.18.0'
-        implementation 'org.mapsforge:mapsforge-map-android:0.18.0'
-        implementation 'com.caverock:androidsvg:1.2.2-beta-1'
-        implementation 'net.sf.kxml:kxml2:2.3.0'
-    }
+    implementation 'org.mapsforge:mapsforge-core:0.18.0'
+    implementation 'org.mapsforge:mapsforge-map:0.18.0'
+    implementation 'org.mapsforge:mapsforge-map-reader:0.18.0'
+    implementation 'org.mapsforge:mapsforge-themes:0.18.0'
+    implementation 'org.mapsforge:mapsforge-map-android:0.18.0'
+    implementation 'com.caverock:androidsvg:1.4'
+    implementation 'net.sf.kxml:kxml2:2.3.0'
 }
