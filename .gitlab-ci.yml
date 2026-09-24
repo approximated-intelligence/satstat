@@ -63,8 +63,11 @@ fdroid build:
     - ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0" "build-tools;34.0.0" 2>/dev/null
   script:
     # Pre-create build directory and set SOURCE_DATE_EPOCH to work around
-    # fdroidserver bug (TypeError: str expected, not NoneType) with --no-tarball
-    - mkdir -p build
+    # fdroidserver bug (TypeError: str expected, not NoneType) with --no-tarball.
+    # fdroidserver's get_source_date_epoch() returns None when build/<package>
+    # doesn't exist; creating it allows git log to succeed.
+    - mkdir -p build/com.vonglasow.michael.satstat
+    - (cd build/com.vonglasow.michael.satstat && git init && git commit --allow-empty -m "fdroid build dir")
     - export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
     - fdroid build --verbose --no-tarball
     # create a keystore if we don't have one
