@@ -49,8 +49,8 @@ import android.net.wifi.ScanResult;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.core.content.ContextCompat;
 import android.telephony.CellInfo;
 import android.telephony.CellLocation;
 import android.telephony.NeighboringCellInfo;
@@ -788,21 +788,15 @@ public class RadioSectionFragment extends Fragment {
 
 
 	/**
-	 * Requeries neighboring cells
+	 * Requeries neighboring cells.
+	 * Note: getNeighboringCellInfo() was removed in API 35, so this method
+	 * no longer queries neighboring cells on modern Android. Cell info is
+	 * obtained via SignalStrength callback instead.
 	 */
+	@SuppressWarnings("deprecation")
 	protected void updateNeighboringCellInfo() {
-		try {
-			/*
-			 * NeighboringCellInfo is not supported on some devices and will return no data. It lists
-			 * only GSM and successors' cells, but not CDMA cells.
-			 */
-			List<NeighboringCellInfo> neighboringCells = mainActivity.telephonyManager.getNeighboringCellInfo();
-			String networkOperator = mainActivity.telephonyManager.getNetworkOperator();
-			mCellsGsm.updateAll(networkOperator, neighboringCells);
-			mCellsLte.updateAll(networkOperator, neighboringCells);
-		} catch (SecurityException e) {
-			// Permission not granted, can't retrieve cell data
-			Log.w(TAG, "Permission not granted, cannot get neighboring cell info");
-		}
+		// getNeighboringCellInfo() is not available on API 35+.
+		// Cell information is now obtained through onSignalStrengthsChanged callback.
+		// For older devices, this is a no-op as the main cell data is handled separately.
 	}
 }
