@@ -27,12 +27,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.TaskStackBuilder;
-import android.support.v4.app.ActivityCompat.OnRequestPermissionsResultCallback;
-import android.support.v4.os.ResultReceiver;
-import android.support.v7.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.TaskStackBuilder;
+import androidx.core.app.ActivityCompat.OnRequestPermissionsResultCallback;
+import android.os.ResultReceiver;
+import androidx.appcompat.app.AppCompatActivity;
 
 /**
  * Provides helper methods to request permissions from components other than Activities.
@@ -45,21 +45,21 @@ public class PermissionHelper {
 	 * Requests permissions to be granted to this application.
 	 * 
 	 * This method is a wrapper around
-	 * {@link android.support.v4.app.ActivityCompat#requestPermissions(android.app.Activity, String[], int)}
+	 * {@link androidx.core.app.ActivityCompat#requestPermissions(android.app.Activity, String[], int)}
 	 * which works in a similar way, except it can be called from non-activity contexts. When called, it
 	 * displays a notification with a customizable title and text. When the user taps the notification, an
 	 * activity is launched in which the user is prompted to allow or deny the request.
 	 * 
 	 * After the user has made a choice,
-	 * {@link android.support.v4.app.ActivityCompat.OnRequestPermissionsResultCallback#onRequestPermissionsResult(int, String[], int[])}
+	 * {@link androidx.core.app.ActivityCompat.OnRequestPermissionsResultCallback#onRequestPermissionsResult(int, String[], int[])}
 	 * is called, reporting whether the permissions were granted or not.
 	 * 
 	 * @param context The context from which the request was made. The context supplied must implement
-	 * {@link android.support.v4.app.ActivityCompat.OnRequestPermissionsResultCallback} and will receive the
+	 * {@link androidx.core.app.ActivityCompat.OnRequestPermissionsResultCallback} and will receive the
 	 * result of the operation.
 	 * @param permissions The requested permissions
 	 * @param requestCode Application specific request code to match with a result reported to
-	 * {@link android.support.v4.app.ActivityCompat.OnRequestPermissionsResultCallback#onRequestPermissionsResult(int, String[], int[])}
+	 * {@link androidx.core.app.ActivityCompat.OnRequestPermissionsResultCallback#onRequestPermissionsResult(int, String[], int[])}
 	 * @param notificationTitle The title for the notification
 	 * @param notificationText The text for the notification
 	 * @param notificationIcon Resource identifier for the notification icon
@@ -85,10 +85,10 @@ public class PermissionHelper {
 		PendingIntent permPendingIntent =
 				stackBuilder.getPendingIntent(
 						0,
-						PendingIntent.FLAG_UPDATE_CURRENT
+						PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE
 						);
 
-		NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
+		NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "satstat_notification")
 		.setSmallIcon(notificationIcon)
 		.setContentTitle(notificationTitle)
 		.setContentText(notificationText)
