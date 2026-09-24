@@ -49,9 +49,7 @@ fdroid build:
   before_script:
     - set -x
     # install dependencies
-    - apt-get update -qq && apt-get install -y -qq wget unzip python3 python3-pip git > /dev/null 2>&1
-    # install fdroidserver
-    - pip3 install --break-system-packages fdroidserver 2>/dev/null || pip3 install fdroidserver
+    - apt-get update -qq && apt-get install -y -qq wget unzip > /dev/null 2>&1
     # install Android SDK cmdline tools
     - wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O /tmp/cmdline-tools.zip
     - mkdir -p ${ANDROID_HOME}/cmdline-tools
@@ -62,14 +60,13 @@ fdroid build:
     - printf 'y\ny\ny\ny\ny\ny\n' | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
     - ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0" "build-tools;34.0.0" 2>/dev/null
   script:
-    # Pre-create build directory and set SOURCE_DATE_EPOCH to work around
-    # fdroidserver bug (TypeError: str expected, not NoneType) with --no-tarball.
-    # fdroidserver's get_source_date_epoch() returns None when build/<package>
-    # doesn't exist; creating it allows git log to succeed.
-    - mkdir -p build/com.vonglasow.michael.satstat
-    - (cd build/com.vonglasow.michael.satstat && git init && git config user.email "ci@localhost" && git config user.name "CI" && git commit --allow-empty -m "fdroid build dir")
-    - export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
-    - fdroid build --verbose --no-tarball
+    # Run the build directly (fdroidserver 2.x pip package lacks gradlew-fdroid)
+    - chmod +x gradlew
+    - ./setbuild.sh
+    - ./gradlew assembleRelease
+    # copy APK to unsigned/ for signing
+    - mkdir -p unsigned
+    - cp build/outputs/apk/release/*.apk unsigned/
     # create a keystore if we don't have one
     - ls .android || mkdir .android
     - ls .android/debug.keystore || keytool -genkey -v -keystore .android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "C=US, O=Android, CN=Android Debug"
