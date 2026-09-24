@@ -47,7 +47,9 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -131,6 +133,7 @@ public class DownloadTreeViewAdapter extends AbstractTreeViewAdapter<RemoteFile>
         do {
         	/*
         	 * The download manager will not supply a local file name until the download has started.
+        	 * On API 29+ (scoped storage), COLUMN_LOCAL_FILENAME is always null for in-progress downloads.
         	 * We therefore need to cover all possible cases:
         	 * - No DownloadInfo yet (file objects may or may not be null)
         	 * - DownloadInfo exists but has no files
@@ -153,11 +156,19 @@ public class DownloadTreeViewAdapter extends AbstractTreeViewAdapter<RemoteFile>
         		}
         		info.progress = progress;
         	} else {
-            	info = new DownloadInfo(uri, targetFile, downloadFile, reference, progress);
-            	downloadsByReference.put(info.reference, info);
-            	downloadsByUri.put(info.uri, info);
-            	if (info.targetFile != null)
-            		downloadsByFile.put(info.targetFile, info);
+        		// For scoped storage, try to find the existing DownloadInfo by URI
+        		info = downloadsByUri.get(uri);
+        		if (info != null) {
+        			// Already tracked, update it
+        			info.progress = progress;
+        			downloadsByReference.put(info.reference, info);
+        		} else {
+	        		info = new DownloadInfo(uri, targetFile, downloadFile, reference, progress);
+	        		downloadsByReference.put(info.reference, info);
+	        		downloadsByUri.put(info.uri, info);
+	        		if (info.targetFile != null)
+	        			downloadsByFile.put(info.targetFile, info);
+        		}
         	}
         	if ((downloadFile != null) && (!downloadsByFile.containsKey(downloadFile))) {
         		info.downloadFile = downloadFile;
@@ -427,15 +438,35 @@ public class DownloadTreeViewAdapter extends AbstractTreeViewAdapter<RemoteFile>
      */
     private void startDownload(RemoteFile rfile, File mapFile, View view) {
     	Uri uri = rfile.getUri();
-    	Uri destUri = Uri.fromFile(mapFile);
     	try {
     		DownloadManager.Request request = new DownloadManager.Request(uri);
-    		//request.setTitle(rfile.name);
-    		//request.setDescription("SatStat map download");
     		request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-    		//request.setDestinationInExternalFilesDir(getActivity(), dirType, subPath)
-    		request.setDestinationUri(destUri);
-    		Log.d(TAG, String.format("Ready to download %s to %s (local name %s)", uri.toString(), destUri.toString(), mapFile.getName()));
+    		// For scoped storage (API 29+), use setDestinationInExternalFilesDir instead of Uri.fromFile
+    		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+    			// Use the app's external files directory - the download will go into the app's sandboxed storage
+    			String parentDir = mapFile.getParent();
+    			String fileName = mapFile.getName();
+    			// Try to find the relative path within the app's external files dir
+    			File appExternalDir = getActivity().getExternalFilesDir(null);
+    			if (appExternalDir != null && parentDir != null && parentDir.startsWith(appExternalDir.getAbsolutePath())) {
+    				String relPath = parentDir.substring(appExternalDir.getAbsolutePath().length());
+    				if (relPath.startsWith("/")) relPath = relPath.substring(1);
+    				if (!relPath.isEmpty()) {
+    					// Create parent directories if needed
+    					File destDir = new File(appExternalDir, relPath);
+    					if (!destDir.exists()) destDir.mkdirs();
+    					request.setDestinationInExternalFilesDir(getActivity(), null, relPath + "/" + fileName);
+    				} else {
+    					request.setDestinationInExternalFilesDir(getActivity(), null, fileName);
+    				}
+    			} else {
+    				request.setDestinationInExternalFilesDir(getActivity(), null, fileName);
+    			}
+    		} else {
+	    		Uri destUri = Uri.fromFile(mapFile);
+	    		request.setDestinationUri(destUri);
+    		}
+    		Log.d(TAG, String.format("Ready to download %s to %s (local name %s)", uri.toString(), mapFile.getAbsolutePath(), mapFile.getName()));
     		Long reference = downloadManager.enqueue(request);
     		DownloadInfo info = new DownloadInfo(rfile, uri, mapFile, reference);
     		downloadsByReference.put(reference, info);
@@ -447,7 +478,7 @@ public class DownloadTreeViewAdapter extends AbstractTreeViewAdapter<RemoteFile>
     		downloadFileProgress.setProgress(0);
     		startProgressChecker();
     	} catch (SecurityException e) {
-    		Log.w(TAG, String.format("Permission not granted to download %s to %s", uri.toString(), destUri.toString()));
+    		Log.w(TAG, String.format("Permission not granted to download %s to %s", uri.toString(), mapFile.getAbsolutePath()));
     	}
     }
     
