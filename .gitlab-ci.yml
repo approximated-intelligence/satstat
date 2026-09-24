@@ -62,6 +62,10 @@ fdroid build:
     - printf 'y\ny\ny\ny\ny\ny\n' | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
     - ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0" "build-tools;34.0.0" 2>/dev/null
   script:
+    # Pre-create build directory and set SOURCE_DATE_EPOCH to work around
+    # fdroidserver bug (TypeError: str expected, not NoneType) with --no-tarball
+    - mkdir -p build
+    - export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
     - fdroid build --verbose --no-tarball
     # create a keystore if we don't have one
     - ls .android || mkdir .android
