@@ -49,7 +49,7 @@ fdroid build:
   before_script:
     - set -x
     # install dependencies
-    - apt-get update -qq && apt-get install -y -qq wget unzip python3 python3-pip > /dev/null 2>&1
+    - apt-get update -qq && apt-get install -y -qq wget unzip python3 python3-pip git > /dev/null 2>&1
     # install fdroidserver
     - pip3 install --break-system-packages fdroidserver 2>/dev/null || pip3 install fdroidserver
     # install Android SDK cmdline tools
