@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2011, Polidea
  * Copyright © 2013–2016 Michael von Glasow.
  * 
  * This file is part of LSRN Tools.
@@ -19,70 +20,92 @@
 
 package com.vonglasow.michael.satstat.utils;
 
-import java.text.SimpleDateFormat;
-import java.util.Locale;
-import java.util.TimeZone;
-
 import android.net.Uri;
-import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A task which retrieves the contents of a remote directory in the background and notifies a listener
  * upon completion.
  */
-public class RemoteDirListTask extends AsyncTask<String, Void, RemoteFile[]> {
-	private static final String TAG = RemoteDirListTask.class.getSimpleName();
-	private RemoteDirListListener listener = null;
-	private RemoteFile parent = null;
-	
-	/**
-	 * Creates a new {@code RemoteDirListTask} task, and registers it with a listener.
-	 * 
-	 * @param listener The {@link RemoteDirListListener} which will be notified when the task has completed.
-	 * @param parent The directory to be listed. When this task finishes, it populates the {@code children}
-	 * member of {@code parent} with the objects it retrieved. May be {@code null}.
-	 */
-	public RemoteDirListTask(RemoteDirListListener listener, RemoteFile parent) {
-		super();
-		this.listener = listener;
-		this.parent = parent;
-	}
-	
-	
-	@Override
-	protected RemoteFile[] doInBackground(String... params) {
-		Uri uri = Uri.parse(params[0]);
-		RemoteFile[] rfiles = null;
-		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ROOT);
-		df.setTimeZone(TimeZone.getDefault());
-		if (uri.getScheme() == null)
-			return null;
-		if (uri.getScheme().equals("http") || uri.getScheme().equals("https"))
-			rfiles = HttpDownloader.list(params[0]);
-		
-		if (rfiles == null)
-			Log.w(TAG, "Error – could not retrieve content!");
-		else if (rfiles.length == 0)
-			Log.w(TAG, "Remote directory is empty.");
-		/*
-		else {
-			Log.d(TAG, "Remote directory contents:");
-			for (RemoteFile rf : rfiles)
-				Log.d(TAG, String.format("\n\t%s \t%s \t%s \t%s",
-					rf.isDirectory ? "D" : "F",
-					df.format(new Date(rf.timestamp)),
-					rf.getFriendlySize(),
-					rf.name));
-		}
-		 */
-		return rfiles;
-	}
+public class RemoteDirListTask {
+private static final String TAG = RemoteDirListTask.class.getSimpleName();
+private static final ExecutorService sExecutor = Executors.newFixedThreadPool(4);
 
-	protected void onPostExecute(RemoteFile[] result) {
-		if (parent != null)
-			parent.children = result;
-		if (listener != null)
-			listener.onRemoteDirListReady(this, result);
+private RemoteDirListListener listener = null;
+private RemoteFile parent = null;
+private final AtomicBoolean cancelled = new AtomicBoolean(false);
+private Future<?> future = null;
+
+/**
+ * Creates a new {@code RemoteDirListTask} task, and registers it with a listener.
+ * 
+ * @param listener The {@link RemoteDirListListener} which will be notified when the task has completed.
+ * @param parent The directory to be listed. When this task finishes, it populates the {@code children}
+ * member of {@code parent} with the objects it retrieved. May be {@code null}.
+ */
+public RemoteDirListTask(RemoteDirListListener listener, RemoteFile parent) {
+this.listener = listener;
+this.parent = parent;
+}
+
+/**
+ * Executes the task with the given URL.
+ */
+public void execute(String url) {
+	if (cancelled.get()) return;
+	final RemoteFile p = parent;
+	future = sExecutor.submit(() -> {
+		if (cancelled.get()) return;
+		final Handler mainHandler = new Handler(Looper.getMainLooper());
+		RemoteFile[] result = listRemote(url);
+
+		mainHandler.post(() -> {
+			if (!cancelled.get()) {
+				if (p != null)
+					p.children = result;
+				if (listener != null)
+					listener.onRemoteDirListReady(RemoteDirListTask.this, result);
+			}
+		});
+	});
+}
+
+/**
+ * Cancels the task.
+ */
+public void cancel(boolean mayInterruptIfRunning) {
+	cancelled.set(true);
+	if (future != null && !future.isDone()) {
+		future.cancel(mayInterruptIfRunning);
 	}
+}
+
+/**
+ * Returns true if the task has been cancelled.
+ */
+public boolean isCancelled() {
+	return cancelled.get();
+}
+
+private RemoteFile[] listRemote(String params) {
+Uri uri = Uri.parse(params);
+RemoteFile[] rfiles = null;
+if (uri.getScheme() == null)
+return null;
+if (uri.getScheme().equals("http") || uri.getScheme().equals("https"))
+rfiles = HttpDownloader.list(params);
+
+if (rfiles == null)
+Log.w(TAG, "Error – could not retrieve content!");
+else if (rfiles.length == 0)
+Log.w(TAG, "Remote directory is empty.");
+
+return rfiles;
+}
 }
