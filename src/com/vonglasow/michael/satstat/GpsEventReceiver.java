@@ -89,7 +89,7 @@ public class GpsEventReceiver extends BroadcastReceiver {
 				Intent startServiceIntent = new Intent(context, PasvLocListenerService.class);
 				startServiceIntent.setAction(intent.getAction());
 				startServiceIntent.putExtras(intent.getExtras());
-				context.startService(startServiceIntent);
+				ContextCompat.startForegroundService(context, startServiceIntent);
 			}
 		} else if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION) 
 				&& updateNetworks.contains(Const.KEY_PREF_UPDATE_NETWORKS_WIFI)) {

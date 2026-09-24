@@ -18,11 +18,11 @@ repositories {
 
 android {
     namespace 'com.vonglasow.michael.satstat'
-    compileSdkVersion 35
+    compileSdk 35
 
     defaultConfig {
-        minSdkVersion 24
-        targetSdkVersion 35
+        minSdk 24
+        targetSdk 35
     }
 
     packagingOptions {
